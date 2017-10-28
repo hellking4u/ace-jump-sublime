@@ -1,5 +1,6 @@
 import sublime, sublime_plugin
 import re, itertools
+import types
 
 last_index = 0
 hints = []
@@ -132,6 +133,7 @@ class KangarooCommand(sublime_plugin.WindowCommand):
     def next_batch(self, command):
         """Displays the next batch of labels after pressing return"""
 
+        ## Mitra : This behaviour needs to go away
         self.remove_labels()
         self.show_prompt(self.prompt(), self.char)
 
@@ -147,6 +149,7 @@ class KangarooCommand(sublime_plugin.WindowCommand):
                 self.add_labels(self.regex().format(re.escape(self.char)))
             return
 
+        # Mitra : Should be probably something like re.search(r'\d+$', command) != None
         if len(command) == 2:
             self.target = command[1]
 
@@ -188,6 +191,7 @@ class KangarooCommand(sublime_plugin.WindowCommand):
         changed_buffers = []
 
         for view in self.views[:]:
+            # Mitra : Does this need chaging? Since the buffer will be changed multiple times?
             if view.buffer_id() in changed_buffers:
                 break
 
@@ -399,9 +403,13 @@ class AddKangarooLabelsCommand(sublime_plugin.TextCommand):
         chars = []
 
         region = self.get_target_region(region_type)
+        debug('target region', region)
+        region.b = region.b+1
         next_search = next_search if next_search else region.begin()
         last_search = region.end()
 
+        all_options = word = self.view.find_all(regex, 0 if case_sensitive else sublime.IGNORECASE)
+        debug(all_options, next_search)
         while (next_search < last_search and last_index < max_labels):
             word = self.view.find(regex, next_search, 0 if case_sensitive else sublime.IGNORECASE)
 
@@ -415,6 +423,7 @@ class AddKangarooLabelsCommand(sublime_plugin.TextCommand):
         if last_index < max_labels:
             next_search = False
 
+        debug(chars)
         return chars
 
     def add_labels(self, edit, regions, labels):
