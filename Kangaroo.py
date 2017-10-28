@@ -16,6 +16,12 @@ mode = 0
 
 kangaroo_active = False
 
+kangaroo_debug_mode = True
+
+def debug(*args):
+    if kangaroo_debug_mode:
+        print(*args)
+
 def get_active_views(window, current_buffer_only):
     """Returns all currently visible views"""
 
