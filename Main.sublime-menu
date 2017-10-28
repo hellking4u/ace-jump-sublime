@@ -6,13 +6,13 @@
                 "id": "package-settings",
                 "children": [
                     {
-                        "caption": "AceJump",
+                        "caption": "Kangaroo",
                         "children": [
                             {
                                 "caption": "README",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/AceJump/README.md"
+                                    "file": "${packages}/Kangaroo/README.md"
                                 }
                             },
                             {
@@ -22,14 +22,14 @@
                                 "caption": "Settings - Default",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/AceJump/AceJump.sublime-settings"
+                                    "file": "${packages}/Kangaroo/Kangaroo.sublime-settings"
                                 }
                             },
                             {
                                 "caption": "Settings - User",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/User/AceJump.sublime-settings"
+                                    "file": "${packages}/User/Kangaroo.sublime-settings"
                                 }
                             },
                             {
@@ -39,7 +39,7 @@
                                 "caption": "Key Bindings - Default",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/AceJump/Default (OSX).sublime-keymap",
+                                    "file": "${packages}/Kangaroo/Default (OSX).sublime-keymap",
                                     "platform": "OSX"
                                 }
                             },
@@ -47,7 +47,7 @@
                                 "caption": "Key Bindings - Default",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/AceJump/Default (Linux).sublime-keymap",
+                                    "file": "${packages}/Kangaroo/Default (Linux).sublime-keymap",
                                     "platform": "Linux"
                                 }
                             },
@@ -55,7 +55,7 @@
                                 "caption": "Key Bindings - Default",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/AceJump/Default (Windows).sublime-keymap",
+                                    "file": "${packages}/Kangaroo/Default (Windows).sublime-keymap",
                                     "platform": "Windows"
                                 }
                             },

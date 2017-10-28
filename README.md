@@ -1,12 +1,12 @@
-# AceJump
+# Kangaroo
 
-A plugin for Sublime Text 3 heavily inspired by AceJump for emacs.
+A plugin for Sublime Text 3 heavily inspired by Kangaroo for emacs.
 
-AceJump allows you to move the cursor to any character to any place currently on screen.
+Kangaroo allows you to move the cursor to any character to any place currently on screen.
 To clarify, you can jump between characters in all visible portions of currently open documents in any panes.
-Like it's emacs counterpart, AceJump for sublime features word (on the image below), character and line modes which make jumping even easier.
+Like it's emacs counterpart, Kangaroo for sublime features word (on the image below), character and line modes which make jumping even easier.
 
-![AceJump](https://cloud.githubusercontent.com/assets/8056203/10858871/92069504-7f58-11e5-8593-e373121fd917.gif)
+![Kangaroo](https://cloud.githubusercontent.com/assets/8056203/10858871/92069504-7f58-11e5-8593-e373121fd917.gif)
 
 After selecting a mode, you type in a character (except in line mode, where you don't have to type in anything) and appropriate labels are displayed. Then all you need to do is press the key from the label and voila!
 
@@ -14,20 +14,20 @@ After selecting a mode, you type in a character (except in line mode, where you 
 
 ### PackageControl
 
-You can install AceJump from [PackageControl](http://wbond.net/sublime_packages/package_control) by following the steps below:
+You can install Kangaroo from [PackageControl](http://wbond.net/sublime_packages/package_control) by following the steps below:
 
 - Open up the command palette and select ```Package Control: Install Package```
-- Wait for the packages index to load and select ```AceJump```
+- Wait for the packages index to load and select ```Kangaroo```
 
 ### Manual installation
 
-You can install AceJump manually using git by running the following command within sublime packages directory (Preferences > Browse Packages):
+You can install Kangaroo manually using git by running the following command within sublime packages directory (Preferences > Browse Packages):
 
 ```
-$ git clone git@github.com:ice9js/ace-jump-sublime.git AceJump/
+$ git clone git@github.com:ice9js/ace-jump-sublime.git Kangaroo/
 ```
 
-Or you can just copy the contents of this repository into ```Packages/AceJump```.
+Or you can just copy the contents of this repository into ```Packages/Kangaroo```.
 
 ## Usage
 
@@ -105,26 +105,26 @@ In case there are more places to jump to than labels available, labels will be b
 
 ## Customization
 
-In order to access AceJump settings, go to ```Preferences > Package Settings > AceJump > Settings - User```.
+In order to access Kangaroo settings, go to ```Preferences > Package Settings > Kangaroo > Settings - User```.
 
 ### Key bindings
 
-Go to ```Preferences > Package Settings > AceJump > Key Bindings - User```.
+Go to ```Preferences > Package Settings > Kangaroo > Key Bindings - User```.
 You can then override the bindings for any of the following commands:
 
-- ```ace_jump_word```
-- ```ace_jump_char```
-- ```ace_jump_line```
-- ```ace_jump_within_line```
-- ```ace_jump_select```
-- ```ace_jump_add_cursor```
-- ```ace_jump_after```
+- ```kangaroo_word```
+- ```kangaroo_char```
+- ```kangaroo_line```
+- ```kangaroo_within_line```
+- ```kangaroo_select```
+- ```kangaroo_add_cursor```
+- ```kangaroo_after```
 
-The commands accept an optional Boolean `current_buffer_only` argument. When present and set to `true`, AceJump only performs on the currently edited buffer.
+The commands accept an optional Boolean `current_buffer_only` argument. When present and set to `true`, Kangaroo only performs on the currently edited buffer.
 
 ### Labels
 
-You can override the ```labels``` setting to provide your own set of labels to be used by AceJump.
+You can override the ```labels``` setting to provide your own set of labels to be used by Kangaroo.
 
 ### Highlighting
 
@@ -136,7 +136,7 @@ Ace jump is case sensitive by default. Case sensitivity can be toggled on and of
 
 ### Jumping behind the last character in a line
 
-By setting ```jump_behind_last_characters``` to ```true```, AceJump will jump behind a character if it's the last character on a line, without the need to trigger jump after mode. This only works in character mode and is switched off by default.
+By setting ```jump_behind_last_characters``` to ```true```, Kangaroo will jump behind a character if it's the last character on a line, without the need to trigger jump after mode. This only works in character mode and is switched off by default.
 
 ### Known issues
 

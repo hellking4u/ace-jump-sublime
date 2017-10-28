@@ -14,7 +14,7 @@ next_search = False
 # 3: jump-after
 mode = 0
 
-ace_jump_active = False
+kangaroo_active = False
 
 def get_active_views(window, current_buffer_only):
     """Returns all currently visible views"""
@@ -76,12 +76,12 @@ def get_views_sel(views):
         selections.append(view.sel())
     return selections
 
-class AceJumpCommand(sublime_plugin.WindowCommand):
-    """Base command class for AceJump plugin"""
+class KangarooCommand(sublime_plugin.WindowCommand):
+    """Base command class for Kangaroo plugin"""
 
     def run(self, current_buffer_only = False):
-        global ace_jump_active
-        ace_jump_active = True
+        global kangaroo_active
+        kangaroo_active = True
 
         self.char = ""
         self.target = ""
@@ -93,7 +93,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         self.syntax = get_views_setting(self.all_views, "syntax")
         self.sel = get_views_sel(self.all_views)
 
-        settings = sublime.load_settings("AceJump.sublime-settings")
+        settings = sublime.load_settings("Kangaroo.sublime-settings")
         self.highlight = settings.get("labels_scope", "invalid")
         self.labels = settings.get(
             "labels",
@@ -112,8 +112,8 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         self.show_prompt(self.prompt(), self.init_value())
 
     def is_enabled(self):
-        global ace_jump_active
-        return not ace_jump_active
+        global kangaroo_active
+        return not kangaroo_active
 
     def show_prompt(self, title, value):
         """Shows a prompt with the given title and value in the window"""
@@ -148,7 +148,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
 
     def submit(self):
         """Handles the behavior after closing the prompt"""
-        global next_search, mode, ace_jump_active
+        global next_search, mode, kangaroo_active
         next_search = False
 
         self.remove_labels()
@@ -159,7 +159,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
             self.jump(self.labels.find(self.target))
 
         mode = 0
-        ace_jump_active = False
+        kangaroo_active = False
 
         """Saves changed views after jump is complete"""
         if self.save_files_after_jump:
@@ -185,7 +185,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
             if view.buffer_id() in changed_buffers:
                 break
 
-            view.run_command("add_ace_jump_labels", {
+            view.run_command("add_kangaroo_labels", {
                 "regex": regex,
                 "region_type": self.region_type,
                 "labels": self.labels,
@@ -202,7 +202,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
             self.views.remove(view)
 
         set_views_syntax(self.all_views, list(itertools.repeat(
-            "Packages/AceJump/AceJump.tmLanguage",
+            "Packages/Kangaroo/Kangaroo.tmLanguage",
             len(self.all_views)
         )))
 
@@ -219,7 +219,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         for breakpoint in self.breakpoints:
             if breakpoint != last_breakpoint:
                 view = self.changed_views[self.view_for_index(breakpoint - 1)]
-                view.run_command("remove_ace_jump_labels")
+                view.run_command("remove_kangaroo_labels")
                 last_breakpoint = breakpoint
 
     def jump(self, index):
@@ -229,7 +229,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         view = self.changed_views[self.view_for_index(index)]
 
         self.window.focus_view(view)
-        view.run_command("perform_ace_jump", {"target": region})
+        view.run_command("perform_kangaroo", {"target": region})
         self.after_jump(view)
 
     def views_to_label(self):
@@ -259,7 +259,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
 
         return "visible_region"
 
-class AceJumpWordCommand(AceJumpCommand):
+class KangarooWordCommand(KangarooCommand):
     """Specialized command for word-mode"""
 
     def prompt(self):
@@ -278,7 +278,7 @@ class AceJumpWordCommand(AceJumpCommand):
             view.run_command("move", {"by": "word_ends", "forward": True})
             mode = 0
 
-class AceJumpCharCommand(AceJumpCommand):
+class KangarooCharCommand(KangarooCommand):
     """Specialized command for char-mode"""
 
     def prompt(self):
@@ -304,9 +304,9 @@ class AceJumpCharCommand(AceJumpCommand):
         if self.jump_behind_last and "\n" in view.substr(hints[index].end()):
             mode = 3
 
-        return AceJumpCommand.jump(self, index)
+        return KangarooCommand.jump(self, index)
 
-class AceJumpLineCommand(AceJumpCommand):
+class KangarooLineCommand(KangarooCommand):
     """Specialized command for line-mode"""
 
     def prompt(self):
@@ -326,7 +326,7 @@ class AceJumpLineCommand(AceJumpCommand):
             view.run_command("move", {"by": "characters", "forward": False})
             mode = 0
 
-class AceJumpWithinLineCommand(AceJumpCommand):
+class KangarooWithinLineCommand(KangarooCommand):
     """Specialized command for within-line-mode"""
 
     def prompt(self):
@@ -349,7 +349,7 @@ class AceJumpWithinLineCommand(AceJumpCommand):
 
         return "current_line"
 
-class AceJumpSelectCommand(sublime_plugin.WindowCommand):
+class KangarooSelectCommand(sublime_plugin.WindowCommand):
     """Command for turning on select mode"""
 
     def run(self):
@@ -357,7 +357,7 @@ class AceJumpSelectCommand(sublime_plugin.WindowCommand):
 
         mode = 0 if mode == 1 else 1
 
-class AceJumpAddCursorCommand(sublime_plugin.WindowCommand):
+class KangarooAddCursorCommand(sublime_plugin.WindowCommand):
     """Command for turning on multiple cursor mode"""
 
     def run(self):
@@ -365,7 +365,7 @@ class AceJumpAddCursorCommand(sublime_plugin.WindowCommand):
 
         mode = 0 if mode == 2 else 2
 
-class AceJumpAfterCommand(sublime_plugin.WindowCommand):
+class KangarooAfterCommand(sublime_plugin.WindowCommand):
     """Modifier-command which lets you jump behind a character, word or line"""
 
     def run(self):
@@ -373,7 +373,7 @@ class AceJumpAfterCommand(sublime_plugin.WindowCommand):
 
         mode = 0 if mode == 3 else 3
 
-class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
+class AddKangarooLabelsCommand(sublime_plugin.TextCommand):
     """Command for adding labels to the views"""
 
     def run(self, edit, regex, region_type, labels, highlight, case_sensitive):
@@ -381,7 +381,7 @@ class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
 
         characters = self.find(regex, region_type, len(labels), case_sensitive)
         self.add_labels(edit, characters, labels)
-        self.view.add_regions("ace_jump_hints", characters, highlight)
+        self.view.add_regions("kangaroo_hints", characters, highlight)
 
         hints = hints + characters
 
@@ -426,15 +426,15 @@ class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
             'current_line': lambda view : view.line(view.sel()[0]),
         }.get(region_type)(self.view)
 
-class RemoveAceJumpLabelsCommand(sublime_plugin.TextCommand):
+class RemoveKangarooLabelsCommand(sublime_plugin.TextCommand):
     """Command for removing labels from the views"""
 
     def run(self, edit):
-        self.view.erase_regions("ace_jump_hints")
+        self.view.erase_regions("kangaroo_hints")
         self.view.end_edit(edit)
         self.view.run_command("undo")
 
-class PerformAceJumpCommand(sublime_plugin.TextCommand):
+class PerformKangarooCommand(sublime_plugin.TextCommand):
     """Command performing the jump"""
 
     def run(self, edit, target):
