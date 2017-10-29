@@ -16,6 +16,12 @@ mode = 0
 
 ace_jump_active = False
 
+# Labels defined in setting file
+ace_jump_labels = []
+
+# Labels generated dynamically
+ace_jump_active_labels = []
+
 def get_active_views(window, current_buffer_only):
     """Returns all currently visible views"""
 
@@ -75,6 +81,21 @@ def get_views_sel(views):
     for view in views:
         selections.append(view.sel())
     return selections
+    
+def sort_double_char_labels(labels):
+    """Sort double char labels based on the order of repeated, lower and other labels"""
+    repeated_char_labels = [label for label in labels if label[0] == label[1]]
+
+    lower_char_labels = [label for label in labels
+                         if label[0].islower() and label[1].islower()
+                         and label not in repeated_char_labels]
+
+    other_labels = [label for label in labels
+                    if label not in repeated_char_labels and label not in lower_char_labels]
+
+    labels = repeated_char_labels + lower_char_labels + other_labels
+
+    return labels
 
 class AceJumpCommand(sublime_plugin.WindowCommand):
     """Base command class for AceJump plugin"""
@@ -82,6 +103,9 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
     def run(self, current_buffer_only = False):
         global ace_jump_active
         ace_jump_active = True
+
+        global ace_jump_labels
+        ace_jump_labels = []
 
         self.char = ""
         self.target = ""
@@ -99,6 +123,9 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
             "labels",
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         )
+        ace_jump_labels = self.labels
+        self.double_char_label = settings.get("double_char_label", False)
+        self.jump_to_boundary = settings.get("jump_to_boundary", True)
         self.case_sensitivity = settings.get("search_case_sensitivity", True)
         self.jump_behind_last = settings.get("jump_behind_last_characters", False)
         self.save_files_after_jump = settings.get("save_files_after_jump", False)
@@ -132,19 +159,17 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
     def on_input(self, command):
         """Fires the necessary actions for the current input"""
 
-        if len(command) == 1:
-            self.char = command
-            if self.char == "<" or self.char == ">":
-                # re.escape escapes these 2 characters but it isn't needed for view.find()
-                self.add_labels(self.regex().format(self.char))
-            else:
-                self.add_labels(self.regex().format(re.escape(self.char)))
+        global ace_jump_active_labels
+
+        if len(command) == 0:
+            self.add_labels(self.regex())
             return
 
-        if len(command) == 2:
-            self.target = command[1]
-
-        self.window.run_command("hide_panel", {"cancel": True})
+        print("Active Labels", ace_jump_active_labels)
+        if ace_jump_active_labels and len(command) == 2:
+            self.target = command
+            self.labels = ace_jump_active_labels
+            self.window.run_command("hide_panel", {"cancel": True})
 
     def submit(self):
         """Handles the behavior after closing the prompt"""
@@ -156,7 +181,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         set_views_syntax(self.all_views, self.syntax)
 
         if self.valid_target(self.target):
-            self.jump(self.labels.find(self.target))
+            self.jump(self.get_index(self.target, self.labels))
 
         mode = 0
         ace_jump_active = False
@@ -189,6 +214,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
                 "regex": regex,
                 "region_type": self.region_type,
                 "labels": self.labels,
+                "double_char_label": self.double_char_label,
                 "highlight": self.highlight,
                 "case_sensitive": self.case_sensitivity
             })
@@ -229,7 +255,8 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
         view = self.changed_views[self.view_for_index(index)]
 
         self.window.focus_view(view)
-        view.run_command("perform_ace_jump", {"target": region})
+        view.run_command("perform_ace_jump", {"target": region, 
+                                              "jump_to_boundary": self.jump_to_boundary})
         self.after_jump(view)
 
     def views_to_label(self):
@@ -249,9 +276,7 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
 
     def valid_target(self, target):
         """Check if jump target is valid"""
-
-        index = self.labels.find(target)
-
+        index = self.get_index(target, self.labels)
         return target != "" and index >= 0 and index < last_index;
 
     def get_region_type(self):
@@ -259,17 +284,25 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
 
         return "visible_region"
 
+    def get_index(self, item, sequence):
+        """Return label index in str or list label set"""
+        if isinstance(sequence, str):
+            index = sequence.find(item)
+        elif isinstance(sequence, list):
+            index = sequence.index(item)
+        return index
+
 class AceJumpWordCommand(AceJumpCommand):
     """Specialized command for word-mode"""
 
     def prompt(self):
-        return "Head char"
+        return "Jump Target"
 
     def init_value(self):
         return ""
 
     def regex(self):
-        return r'\b{}'
+        return r'(\b\w+)'
 
     def after_jump(self, view):
         global mode
@@ -288,7 +321,7 @@ class AceJumpCharCommand(AceJumpCommand):
         return ""
 
     def regex(self):
-        return r'{}'
+        return r'([a-zA-Z])..'
 
     def after_jump(self, view):
         global mode
@@ -306,64 +339,64 @@ class AceJumpCharCommand(AceJumpCommand):
 
         return AceJumpCommand.jump(self, index)
 
-class AceJumpLineCommand(AceJumpCommand):
-    """Specialized command for line-mode"""
+# class AceJumpLineCommand(AceJumpCommand):
+#     """Specialized command for line-mode"""
 
-    def prompt(self):
-        return ""
+#     def prompt(self):
+#         return ""
 
-    def init_value(self):
-        return " "
+#     def init_value(self):
+#         return " "
 
-    def regex(self):
-        return r'(.*)[^\s](.*)\n'
+#     def regex(self):
+#         return r'(.*)[^\s](.*)\n'
 
-    def after_jump(self, view):
-        global mode
+#     def after_jump(self, view):
+#         global mode
 
-        if mode == 3:
-            view.run_command("move", {"by": "lines", "forward": True})
-            view.run_command("move", {"by": "characters", "forward": False})
-            mode = 0
+#         if mode == 3:
+#             view.run_command("move", {"by": "lines", "forward": True})
+#             view.run_command("move", {"by": "characters", "forward": False})
+#             mode = 0
 
-class AceJumpWithinLineCommand(AceJumpCommand):
-    """Specialized command for within-line-mode"""
+# class AceJumpWithinLineCommand(AceJumpCommand):
+#     """Specialized command for within-line-mode"""
 
-    def prompt(self):
-        return ""
+#     def prompt(self):
+#         return ""
 
-    def init_value(self):
-        return " "
+#     def init_value(self):
+#         return " "
 
-    def regex(self):
-        return r'\b\w'
+#     def regex(self):
+#         return r'\b\w|\w\b|(?<=_)\w|\w(?=_)'
 
-    def after_jump(self, view):
-        global mode
+#     def after_jump(self, view):
+#         global mode
 
-        if mode == 3:
-            view.run_command("move", {"by": "word_ends", "forward": True})
-            mode = 0
+#         if mode == 3:
+#             view.run_command("move", {"by": "word_ends", "forward": True})
+#             mode = 0
 
-    def get_region_type(self):
+#     def get_region_type(self):
 
-        return "current_line"
+#         return "current_line"
 
-class AceJumpSelectCommand(sublime_plugin.WindowCommand):
-    """Command for turning on select mode"""
+# class AceJumpSelectCommand(sublime_plugin.WindowCommand):
+#     """Command for turning on select mode"""
 
-    def run(self):
-        global mode
+#     def run(self):
+#         global mode
 
-        mode = 0 if mode == 1 else 1
+#         mode = 0 if mode == 1 else 1
 
-class AceJumpAddCursorCommand(sublime_plugin.WindowCommand):
-    """Command for turning on multiple cursor mode"""
+# class AceJumpAddCursorCommand(sublime_plugin.WindowCommand):
+#     """Command for turning on multiple cursor mode"""
 
-    def run(self):
-        global mode
+#     def run(self):
+#         global mode
 
-        mode = 0 if mode == 2 else 2
+#         mode = 0 if mode == 2 else 2
 
 class AceJumpAfterCommand(sublime_plugin.WindowCommand):
     """Modifier-command which lets you jump behind a character, word or line"""
@@ -376,12 +409,17 @@ class AceJumpAfterCommand(sublime_plugin.WindowCommand):
 class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
     """Command for adding labels to the views"""
 
-    def run(self, edit, regex, region_type, labels, highlight, case_sensitive):
+    # Regions after label replacing
+    replaced_regions = []
+
+    def run(self, edit, regex, region_type, labels, double_char_label, highlight, case_sensitive):
         global hints
 
-        characters = self.find(regex, region_type, len(labels), case_sensitive)
-        self.add_labels(edit, characters, labels)
-        self.view.add_regions("ace_jump_hints", characters, highlight)
+        max_labels = len(labels) ** 2 if double_char_label else len(labels)
+        characters = self.find(regex, region_type, max_labels, case_sensitive)
+        self.add_labels(edit, characters, labels, double_char_label)
+        # self.view.add_regions("ace_jump_hints", characters, highlight)
+        self.view.add_regions("ace_jump_hints", self.replaced_regions, highlight)
 
         hints = hints + characters
 
@@ -399,7 +437,7 @@ class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
         while (next_search < last_search and last_index < max_labels):
             word = self.view.find(regex, next_search, 0 if case_sensitive else sublime.IGNORECASE)
 
-            if not word or word.end() > last_search:
+            if not word or word.end() >= last_search:
                 break
 
             last_index += 1
@@ -411,13 +449,35 @@ class AddAceJumpLabelsCommand(sublime_plugin.TextCommand):
 
         return chars
 
-    def add_labels(self, edit, regions, labels):
+    def add_labels(self, edit, regions, labels, double_char_label):
         """Replaces the given regions with labels"""
 
+        global ace_jump_active_labels
+
+        if double_char_label and len(regions) > len(labels):
+            labels = [char_a + char_b for char_a in labels for char_b in labels]
+            labels = sort_double_char_labels(labels)
+            for i, region in enumerate(regions):
+                regions[i] = sublime.Region(region.a, region.b + 1)
+
+        ace_jump_active_labels = labels
+
+        num_region = len(regions)
+        region_offset = 0
+        self.replaced_regions = []
+
         for i in range(len(regions)):
-            self.view.replace(
-                edit, regions[i], labels[last_index + i - len(regions)]
-            )
+            label = labels[last_index + i - num_region]
+            region = regions[i]
+            if region_offset:
+                region = sublime.Region(region.a + region_offset, region.b + region_offset)
+            content = self.view.substr(region)
+            if content[-1] in ('\n', '\r'):
+                # region = sublime.Region(region.a, region.b + 1)
+                label += content[-1]
+                region_offset += 1
+            self.replaced_regions.append(region)
+            self.view.replace(edit, region, label)
 
     def get_target_region(self, region_type):
 
@@ -437,15 +497,22 @@ class RemoveAceJumpLabelsCommand(sublime_plugin.TextCommand):
 class PerformAceJumpCommand(sublime_plugin.TextCommand):
     """Command performing the jump"""
 
-    def run(self, edit, target):
+    def run(self, edit, target, jump_to_boundary):
         global mode
         if mode == 0 or mode == 3:
             self.view.sel().clear()
 
-        self.view.sel().add(self.target_region(target))
+        self.view.sel().add(self.target_region(target, jump_to_boundary))
         self.view.show(target)
 
-    def target_region(self, target):
+    def target_region(self, target, jump_to_boundary):
+        if jump_to_boundary:
+            # Check if the target next to boundary, if so, move the target one letter righter to put the 
+            # cursor right on the boundary
+            nextChar = self.view.substr(sublime.Region(target + 1, target + 2))
+            if re.match('[^\w]', nextChar):
+                target += 1
+
         if mode == 1:
             for cursor in self.view.sel():
                 return sublime.Region(cursor.begin(), target)

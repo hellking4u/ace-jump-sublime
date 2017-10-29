@@ -1,12 +1,18 @@
 {
     // Characters to be used as labels in order they'll appear
-    "labels": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "labels": "abcdefghijklmnopqrstuvwxyz",
 
     // Syntax highlighting scope for the labels
     "labels_scope": "invalid",
 
+    // Enable double character label, eg. aa AA aB ...
+    "double_char_label": true,
+
+    // Jump to boundary if the char is at the end of a word insteadly
+    "jump_to_boundary": true,
+
     // Toggles case sensitive search in word and character modes.
-    "search_case_sensitivity": true,
+    "search_case_sensitivity": false,
 
     // Saves all the files aceJump tried to parse.
     // This setting will reset any linter warnings you might see during jump
