@@ -165,7 +165,6 @@ class AceJumpCommand(sublime_plugin.WindowCommand):
             self.add_labels(self.regex())
             return
 
-        print("Active Labels", ace_jump_active_labels)
         if ace_jump_active_labels and len(command) == 2:
             self.target = command
             self.labels = ace_jump_active_labels
